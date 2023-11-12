@@ -118,6 +118,7 @@ add_executable(etl_tests
 	test_fixed_sized_memory_block_allocator.cpp
 	test_flags.cpp
 	test_flat_map.cpp
+	test_flat_map_external_buffer.cpp
 	test_flat_multimap.cpp
 	test_flat_multiset.cpp
 	test_flat_set.cpp
