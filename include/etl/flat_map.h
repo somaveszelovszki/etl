@@ -1366,16 +1366,7 @@ namespace etl
     {
       if (&rhs != this)
       {
-        this->clear();
-
-        typename etl::iflat_map<TKey, TValue, TCompare>::iterator itr = rhs.begin();
-        while (itr != rhs.end())
-        {
-          this->push_back(etl::move(*itr));
-          ++itr;
-        }
-
-        rhs.initialise();
+        this->move_container(etl::move(rhs));
       }
 
       return *this;
