@@ -60,9 +60,9 @@ namespace
   typedef etl::iflat_map<int, DC>     IDataDC;
   typedef etl::iflat_map<int, NDC>    IDataNDC;
 
-  typedef etl::flat_map<int, int, SIZE> DataInt;
+  typedef etl::flat_map_ext<int, int> DataInt;
 
-  typedef etl::flat_map<int, MC, SIZE>  DataM;
+  typedef etl::flat_map_ext<int, MC>  DataM;
   typedef etl::iflat_map<int, MC>       IDataM;
 
   typedef std::map<int, DC>  Compare_DataDC;
@@ -416,7 +416,9 @@ namespace
       Item p3(3, "3");
       Item p4(4, MC("4"));
 
-      DataM data1;
+      DataM::node_ptr_t lookup1[SIZE];
+      uint8_t storage1[sizeof(DataM::node_t) * SIZE];
+      DataM data1(lookup1, storage1, SIZE);
       data1.insert(std::move(p1));
       data1.insert(std::move(p2));
       data1.insert(std::move(p3));
@@ -427,7 +429,9 @@ namespace
       CHECK(!bool(p3.second));
       CHECK(!bool(p4.second));
 
-      DataM data2(std::move(data1));
+      DataM::node_ptr_t lookup2[SIZE];
+      uint8_t storage2[sizeof(DataM::node_t) * SIZE];
+      DataM data2(std::move(data1), lookup2, storage2, SIZE);
 
       CHECK(4U== data1.size()); // Move does not clear the source.
       CHECK(4U== data2.size());
@@ -503,6 +507,47 @@ namespace
                                  other_data.begin());
 
       CHECK(isEqual);
+    }
+
+    //*************************************************************************
+    TEST_FIXTURE(SetupFixture, test_move_assignment)
+    {
+      using Item = ETL_OR_STD::pair<int, MC>;
+
+      Item p1(1, MC("1"));
+      Item p2(2, "2");
+      Item p3(3, "3");
+      Item p4(4, MC("4"));
+      Item p5(5, MC("5"));
+
+      DataM::node_ptr_t lookup1[SIZE];
+      uint8_t storage1[sizeof(DataM::node_t) * SIZE];
+      DataM data1(lookup1, storage1, SIZE);
+      data1.insert(std::move(p1));
+      data1.insert(std::move(p2));
+      data1.insert(std::move(p3));
+      data1.insert(std::move(p4));
+
+      CHECK(!bool(p1.second));
+      CHECK(!bool(p2.second));
+      CHECK(!bool(p3.second));
+      CHECK(!bool(p4.second));
+
+      DataM::node_ptr_t lookup2[SIZE];
+      uint8_t storage2[sizeof(DataM::node_t) * SIZE];
+      DataM data2(lookup2, storage2, SIZE);
+      data2.insert(std::move(p5));
+      data2 = std::move(data1);
+
+      CHECK(4U== data1.size()); // Move does not clear the source.
+      CHECK(4U== data2.size());
+
+      DataM::const_iterator itr = data2.begin();
+
+      CHECK("1"== (*itr++).second.value);
+      CHECK("2"== (*itr++).second.value);
+      CHECK("3"== (*itr++).second.value);
+      CHECK("4"== (*itr++).second.value);
     }
 
     //*************************************************************************
@@ -1278,7 +1323,9 @@ namespace
     //*************************************************************************
     TEST_FIXTURE(SetupFixture, test_clear_pod)
     {
-      DataInt data(int_data.begin(), int_data.end());
+      DataInt::node_ptr_t lookup[SIZE];
+      uint8_t storage[sizeof(DataInt::node_t) * SIZE];
+      DataInt data(int_data.begin(), int_data.end(), lookup, storage, SIZE);
       data.clear();
       CHECK(data.size() == size_t(0UL));
 
