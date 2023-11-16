@@ -1260,8 +1260,9 @@ namespace etl
   //***************************************************************************
   /// A flat_map implementation that uses fixed size external buffers.
   /// The buffers are supplied on construction.
-  ///\tparam T The element type.
-  ///\ingroup flat_map
+  ///\tparam TKey     The key type.
+  ///\tparam TValue   The value type.
+  ///\tparam TCompare The type to compare keys. Default = etl::less<TKey>
   //***************************************************************************
   template <typename TKey, typename TValue, typename TCompare = etl::less<TKey> >
   class flat_map_ext : public etl::iflat_map<TKey, TValue, TCompare>
@@ -1373,7 +1374,7 @@ namespace etl
     }
 #endif
 
-private:
+  private:
 
     /// The pool of nodes.
     etl::pool_ext<node_t> storage;

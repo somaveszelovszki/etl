@@ -338,26 +338,6 @@ namespace
       CHECK(data.begin() == data.end());
     }
 
-#if ETL_USING_CPP17 && ETL_HAS_INITIALIZER_LIST && !defined(ETL_TEMPLATE_DEDUCTION_GUIDE_TESTS_DISABLED)
-    //*************************************************************************
-    TEST_FIXTURE(SetupFixture, test_cpp17_deduced_constructor)
-    {
-      etl::flat_map data{ ElementNDC(0, N0), ElementNDC(1, N1), ElementNDC(2, N2), ElementNDC(3, N3), ElementNDC(4, N4),
-                          ElementNDC(5, N5), ElementNDC(6, N6), ElementNDC(7, N7), ElementNDC(8, N8), ElementNDC(9, N9) };
-      etl::flat_map<int, NDC, 10U> check = { ElementNDC(0, N0), ElementNDC(1, N1), ElementNDC(2, N2), ElementNDC(3, N3), ElementNDC(4, N4),
-                                             ElementNDC(5, N5), ElementNDC(6, N6), ElementNDC(7, N7), ElementNDC(8, N8), ElementNDC(9, N9) };
-
-      CHECK(!data.empty());
-      CHECK(data.full());
-      CHECK(data.begin() != data.end());
-      CHECK_EQUAL(10U, data.size());
-      CHECK_EQUAL(0U, data.available());
-      CHECK_EQUAL(10U, data.capacity());
-      CHECK_EQUAL(10U, data.max_size());
-      CHECK(data == check);
-    }
-#endif
-
     //*************************************************************************
     TEST_FIXTURE(SetupFixture, test_destruct_via_iflat_map)
     {
@@ -710,8 +690,10 @@ namespace
       using CMap = std::map<int, NDC>;
       CMap compare_data(initial_data.begin(), initial_data.end());
 
-      using EMap = etl::flat_map<int, NDC, SIZE, etl::less<>>;
-      EMap data(initial_data.begin(), initial_data.end());
+      using EMap = etl::flat_map_ext<int, NDC, etl::less<>>;
+      DataNDC::node_ptr_t lookup[SIZE];
+      uint8_t storage[sizeof(DataNDC::node_t) * SIZE];
+      EMap data(initial_data.begin(), initial_data.end(), lookup, storage, SIZE);
 
       CHECK(data.at(Key(0)) == compare_data.at(0));
       CHECK(data.at(Key(1)) == compare_data.at(1));
@@ -764,8 +746,10 @@ namespace
       using CMap = std::map<int, NDC>;
       const CMap compare_data(initial_data.begin(), initial_data.end());
 
-      using EMap = etl::flat_map<int, NDC, SIZE, etl::less<>>;
-      const EMap data(initial_data.begin(), initial_data.end());
+      using EMap = etl::flat_map_ext<int, NDC, etl::less<>>;
+      DataNDC::node_ptr_t lookup[SIZE];
+      uint8_t storage[sizeof(DataNDC::node_t) * SIZE];
+      const EMap data(initial_data.begin(), initial_data.end(), lookup, storage, SIZE);
 
       CHECK(data.at(Key(0)) == compare_data.at(0));
       CHECK(data.at(Key(1)) == compare_data.at(1));
@@ -1165,8 +1149,10 @@ namespace
       using CMap = std::map<int, NDC>;
       CMap compare_data(initial_data.begin(), initial_data.end());
 
-      using EMap = etl::flat_map<int, NDC, SIZE, etl::less<>>;
-      EMap data(initial_data.begin(), initial_data.end());
+      using EMap = etl::flat_map_ext<int, NDC, etl::less<>>;
+      DataNDC::node_ptr_t lookup[SIZE];
+      uint8_t storage[sizeof(DataNDC::node_t) * SIZE];
+      EMap data(initial_data.begin(), initial_data.end(), lookup, storage, SIZE);
 
       size_t count_compare = compare_data.erase(5);
       size_t count = data.erase(Key(5));
@@ -1412,8 +1398,10 @@ namespace
     //*************************************************************************
     TEST_FIXTURE(SetupFixture, test_find_using_transparent_comparator)
     {
-      using EMap = etl::flat_map<int, NDC, SIZE, etl::less<>>;
-      EMap data(initial_data.begin(), initial_data.end());
+      using EMap = etl::flat_map_ext<int, NDC, etl::less<>>;
+      DataNDC::node_ptr_t lookup[SIZE];
+      uint8_t storage[sizeof(DataNDC::node_t) * SIZE];
+      EMap data(initial_data.begin(), initial_data.end(), lookup, storage, SIZE);
 
       EMap::iterator it = data.find(Key(3));
       CHECK(N3 == it->second);
@@ -1436,8 +1424,10 @@ namespace
     //*************************************************************************
     TEST_FIXTURE(SetupFixture, test_find_not_present_using_transparent_comparator)
     {
-      using EMap = etl::flat_map<int, NDC, SIZE, etl::less<>>;
-      EMap data(initial_data.begin(), initial_data.end());
+      using EMap = etl::flat_map_ext<int, NDC, etl::less<>>;
+      DataNDC::node_ptr_t lookup[SIZE];
+      uint8_t storage[sizeof(DataNDC::node_t) * SIZE];
+      EMap data(initial_data.begin(), initial_data.end(), lookup, storage, SIZE);
 
       EMap::iterator it = data.find(Key(-1));
       CHECK(data.end() == it);
@@ -1460,8 +1450,10 @@ namespace
     //*************************************************************************
     TEST_FIXTURE(SetupFixture, test_find_const_using_transparent_comparator)
     {
-      using EMap = etl::flat_map<int, NDC, SIZE, etl::less<>>;
-      const EMap data(initial_data.begin(), initial_data.end());
+      using EMap = etl::flat_map_ext<int, NDC, etl::less<>>;
+      DataNDC::node_ptr_t lookup[SIZE];
+      uint8_t storage[sizeof(DataNDC::node_t) * SIZE];
+      const EMap data(initial_data.begin(), initial_data.end(), lookup, storage, SIZE);
 
       EMap::const_iterator it = data.find(Key(3));
       CHECK(N3 == it->second);
@@ -1484,8 +1476,10 @@ namespace
     //*************************************************************************
     TEST_FIXTURE(SetupFixture, test_find_const_not_present_using_transparent_comparator)
     {
-      using EMap = etl::flat_map<int, NDC, SIZE, etl::less<>>;
-      const EMap data(initial_data.begin(), initial_data.end());
+      using EMap = etl::flat_map_ext<int, NDC, etl::less<>>;
+      DataNDC::node_ptr_t lookup[SIZE];
+      uint8_t storage[sizeof(DataNDC::node_t) * SIZE];
+      const EMap data(initial_data.begin(), initial_data.end(), lookup, storage, SIZE);
 
       EMap::const_iterator it = data.find(Key(-1));
       CHECK(data.end() == it);
@@ -1514,8 +1508,10 @@ namespace
       using CMap = std::map<int, NDC>;
       CMap compare_data(initial_data.begin(), initial_data.end());
 
-      using EMap = etl::flat_map<int, NDC, SIZE, etl::less<>>;
-      EMap data(initial_data.begin(), initial_data.end());
+      using EMap = etl::flat_map_ext<int, NDC, etl::less<>>;
+      DataNDC::node_ptr_t lookup[SIZE];
+      uint8_t storage[sizeof(DataNDC::node_t) * SIZE];
+      EMap data(initial_data.begin(), initial_data.end(), lookup, storage, SIZE);
 
       CMap::iterator i_compare = compare_data.lower_bound(5);
       EMap::iterator i_data    = data.lower_bound(Key(5));
@@ -1543,8 +1539,10 @@ namespace
       using CMap = std::map<int, NDC>;
       CMap compare_data(initial_data.begin(), initial_data.end());
 
-      using EMap = etl::flat_map<int, NDC, SIZE, etl::less<>>;
-      EMap data(initial_data.begin(), initial_data.end());
+      using EMap = etl::flat_map_ext<int, NDC, etl::less<>>;
+      DataNDC::node_ptr_t lookup[SIZE];
+      uint8_t storage[sizeof(DataNDC::node_t) * SIZE];
+      EMap data(initial_data.begin(), initial_data.end(), lookup, storage, SIZE);
 
       CMap::iterator i_compare = compare_data.upper_bound(5);
       EMap::iterator i_data    = data.upper_bound(Key(5));
@@ -1573,8 +1571,10 @@ namespace
       using CMap = std::map<int, NDC>;
       CMap compare_data(initial_data.begin(), initial_data.end());
 
-      using EMap = etl::flat_map<int, NDC, SIZE, etl::less<>>;
-      EMap data(initial_data.begin(), initial_data.end());
+      using EMap = etl::flat_map_ext<int, NDC, etl::less<>>;
+      DataNDC::node_ptr_t lookup[SIZE];
+      uint8_t storage[sizeof(DataNDC::node_t) * SIZE];
+      EMap data(initial_data.begin(), initial_data.end(), lookup, storage, SIZE);
 
       ETL_OR_STD::pair<CMap::iterator, CMap::iterator> i_compare = compare_data.equal_range(5);
       ETL_OR_STD::pair<EMap::iterator, EMap::iterator> i_data = data.equal_range(Key(5));
@@ -1609,8 +1609,10 @@ namespace
       using CMap = std::map<int, NDC>;
       CMap compare_data(initial_data.begin(), initial_data.end());
 
-      using EMap = etl::flat_map<int, NDC, SIZE, etl::less<>>;
-      EMap data(initial_data.begin(), initial_data.end());
+      using EMap = etl::flat_map_ext<int, NDC, etl::less<>>;
+      DataNDC::node_ptr_t lookup[SIZE];
+      uint8_t storage[sizeof(DataNDC::node_t) * SIZE];
+      EMap data(initial_data.begin(), initial_data.end(), lookup, storage, SIZE);
 
       ETL_OR_STD::pair<CMap::iterator, CMap::iterator> i_compare;
       ETL_OR_STD::pair<EMap::iterator, EMap::iterator> i_data;
@@ -1665,48 +1667,6 @@ namespace
     }
 
     //*************************************************************************
-#if ETL_USING_CPP17 && ETL_HAS_INITIALIZER_LIST && !defined(ETL_TEMPLATE_DEDUCTION_GUIDE_TESTS_DISABLED)
-    TEST_FIXTURE(SetupFixture, test_flat_map_template_deduction)
-    {
-      using Pair = ETL_OR_STD::pair<const int, NDC>;
-
-      etl::flat_map data{ Pair(0, NDC("A")), Pair(1, NDC("B")), Pair(2, NDC("C")), Pair(3, NDC("D")), Pair(4, NDC("E")), Pair(5, NDC("F")) };
-
-      auto v = *data.begin();
-      using Type = decltype(v);
-      CHECK((std::is_same_v<Pair, Type>));
-
-      CHECK_EQUAL(NDC("A"), data.at(0));
-      CHECK_EQUAL(NDC("B"), data.at(1));
-      CHECK_EQUAL(NDC("C"), data.at(2));
-      CHECK_EQUAL(NDC("D"), data.at(3));
-      CHECK_EQUAL(NDC("E"), data.at(4));
-      CHECK_EQUAL(NDC("F"), data.at(5));
-    }
-#endif
-
-    //*************************************************************************
-#if ETL_HAS_INITIALIZER_LIST
-    TEST_FIXTURE(SetupFixture, test_make_flat_map)
-    {
-      using Pair = ETL_OR_STD::pair<const int, NDC>;
-
-      auto data = etl::make_flat_map<const int, NDC>(Pair(0, NDC("A")), Pair(1, NDC("B")), Pair(2, NDC("C")), Pair(3, NDC("D")), Pair(4, NDC("E")), Pair(5, NDC("F")));
-      
-      auto v = *data.begin();
-      using Type = decltype(v);
-      CHECK((std::is_same<Pair, Type>::value));
-
-      CHECK_EQUAL(NDC("A"), data.at(0));
-      CHECK_EQUAL(NDC("B"), data.at(1));
-      CHECK_EQUAL(NDC("C"), data.at(2));
-      CHECK_EQUAL(NDC("D"), data.at(3));
-      CHECK_EQUAL(NDC("E"), data.at(4));
-      CHECK_EQUAL(NDC("F"), data.at(5));
-    }
-#endif
-
-    //*************************************************************************
     TEST_FIXTURE(SetupFixture, test_contains)
     {
       DataNDC::node_ptr_t lookup[SIZE];
@@ -1720,8 +1680,10 @@ namespace
     //*************************************************************************
     TEST_FIXTURE(SetupFixture, test_contains_with_transparent_comparator)
     {
-      using EMap = etl::flat_map<int, NDC, SIZE, etl::less<>>;
-      EMap data(initial_data.begin(), initial_data.end());
+      using EMap = etl::flat_map_ext<int, NDC, etl::less<>>;
+      DataNDC::node_ptr_t lookup[SIZE];
+      uint8_t storage[sizeof(DataNDC::node_t) * SIZE];
+      EMap data(initial_data.begin(), initial_data.end(), lookup, storage, SIZE);
 
       CHECK(data.contains(Key(1)));
       CHECK(!data.contains(Key(99)));
