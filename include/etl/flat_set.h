@@ -1135,6 +1135,131 @@ namespace etl
     return { {etl::forward<T>(keys)...} };
   }
 #endif
+
+  //***************************************************************************
+  /// A flat_set implementation that uses fixed size external buffers.
+  /// The buffers are supplied on construction.
+  ///\tparam T        The value type.
+  ///\tparam TCompare The type to compare keys. Default = etl::less<T>
+  //***************************************************************************
+  template <typename T, typename TCompare = etl::less<T> >
+  class flat_set_ext : public etl::iflat_set<T, TCompare>
+  {
+  public:
+    typedef typename etl::iflat_set<T, TCompare>::value_type node_t;
+    typedef typename etl::iflat_set<T, TCompare>::value_type *node_ptr_t;
+
+    //*************************************************************************
+    /// Constructor.
+    //*************************************************************************
+    flat_set_ext(void* lookup_buffer, void* storage_buffer, size_t max_size)
+      : etl::iflat_set<T, TCompare>(lookup, storage)
+      , storage(reinterpret_cast<typename etl::pool_ext<node_t>::element*>(storage_buffer), max_size)
+      , lookup(lookup_buffer, max_size)
+    {
+    }
+
+    //*************************************************************************
+    /// Copy constructor.
+    //*************************************************************************
+    flat_set_ext(const flat_set_ext& other, void* lookup_buffer, void* storage_buffer, size_t max_size)
+      : etl::iflat_set<T, TCompare>(lookup, storage)
+      , storage(reinterpret_cast<typename etl::pool_ext<node_t>::element*>(storage_buffer), max_size)
+      , lookup(lookup_buffer, max_size)
+    {
+      this->assign(other.begin(), other.end());
+    }
+
+  #if ETL_USING_CPP11
+    //*************************************************************************
+    /// Move constructor.
+    //*************************************************************************
+    flat_set_ext(flat_set_ext&& other, void* lookup_buffer, void* storage_buffer, size_t max_size)
+      : etl::iflat_set<T, TCompare>(lookup, storage)
+      , storage(reinterpret_cast<typename etl::pool_ext<node_t>::element*>(storage_buffer), max_size)
+      , lookup(lookup_buffer, max_size)
+    {
+      if (&other != this)
+      {
+        this->move_container(etl::move(other));
+      }
+    }
+#endif
+
+    //*************************************************************************
+    /// Constructor, from an iterator range.
+    ///\tparam TIterator The iterator type.
+    ///\param first The iterator to the first element.
+    ///\param last  The iterator to the last element + 1.
+    //*************************************************************************
+    template <typename TIterator>
+    flat_set_ext(TIterator first, TIterator last, void* lookup_buffer, void* storage_buffer, size_t max_size,
+      typename etl::enable_if<!etl::is_integral<TIterator>::value, int>::type = 0)
+      : etl::iflat_set<T, TCompare>(lookup, storage)
+      , storage(reinterpret_cast<typename etl::pool_ext<node_t>::element*>(storage_buffer), max_size)
+      , lookup(lookup_buffer, max_size)
+    {
+      this->assign(first, last);
+    }
+
+#if ETL_HAS_INITIALIZER_LIST
+    //*************************************************************************
+    /// Constructor, from an initializer_list.
+    //*************************************************************************
+    flat_set_ext(std::initializer_list<typename etl::iflat_set<T, TCompare>::value_type> init,
+      void* lookup_buffer, void* storage_buffer, size_t max_size)
+      : etl::iflat_set<T, TCompare>(lookup, storage)
+      , storage(reinterpret_cast<typename etl::pool_ext<node_t>::element*>(storage_buffer), max_size)
+      , lookup(lookup_buffer, max_size)
+    {
+      this->assign(init.begin(), init.end());
+    }
+#endif
+
+    //*************************************************************************
+    /// Destructor.
+    //*************************************************************************
+    ~flat_set_ext()
+    {
+      this->clear();
+    }
+
+    //*************************************************************************
+    /// Assignment operator.
+    //*************************************************************************
+    flat_set_ext& operator = (const flat_set_ext& rhs)
+    {
+      if (&rhs != this)
+      {
+        this->assign(rhs.cbegin(), rhs.cend());
+      }
+
+      return *this;
+    }
+
+#if ETL_USING_CPP11
+    //*************************************************************************
+    /// Move assignment operator.
+    //*************************************************************************
+    flat_set_ext& operator = (flat_set_ext&& rhs)
+    {
+      if (&rhs != this)
+      {
+        this->move_container(etl::move(rhs));
+      }
+
+      return *this;
+    }
+#endif
+
+  private:
+
+    /// The pool of nodes.
+    etl::pool_ext<node_t> storage;
+
+    /// The vector that stores pointers to the nodes.
+    etl::vector_ext<node_ptr_t> lookup;
+  };
 }
 
 #endif

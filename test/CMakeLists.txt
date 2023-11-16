@@ -122,6 +122,7 @@ add_executable(etl_tests
 	test_flat_multimap.cpp
 	test_flat_multiset.cpp
 	test_flat_set.cpp
+	test_flat_set_external_buffer.cpp
 	test_fnv_1.cpp
 	test_format_spec.cpp
 	test_forward_list.cpp
